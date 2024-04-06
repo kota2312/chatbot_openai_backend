@@ -24,9 +24,11 @@ puppeteer.launch({
         return news;
     }, itemSelector);
 
+    let titleArray = [];
+    let textArray = [];
     for (let i = 0; i < newsList.length; i++) {
         const newsUrl = newsList[i];
-        console.log("Navigating to:", newsUrl);
+        //console.log("Navigating to:", newsUrl);
         await page.goto(newsUrl);
         let detailSelector = '#uamods-pickup > div[class*="sc-"] > div[class*="sc-"] > a[href*="yahoo"]';
         const newsDetail = await page.evaluate((detailSelector) => {
@@ -42,24 +44,33 @@ puppeteer.launch({
             const detailUrl = newsDetail[j];
             await page.goto(detailUrl);
         }
-        const title = await page.title();
-        console.log("Title:", title);
 
+        // タイトルを追加
+        const title = await page.title();
+        titleArray.push(title);
+
+        //本文を追加
         const newsTextElement = await page.$('div[class*="article_body"] > div[class*="sc-"] > p[class*="sc-"]');
         const newsText = await page.evaluate(element => element.innerText, newsTextElement);
-        console.log(newsText);
+        //console.log(newsText)
+        textArray.push(newsText.split(',').join(', ')); // カンマで区切り、それぞれの要素の間にスペースを追加して連結
     }
-    //await browser.close();
 
-    const express = require('express')
+    console.log(titleArray);
+    console.log(textArray);
+    await browser.close();
+
+    const express = require('express');
     const app = express();
-    app.use(express.json())
-    app.use(express.urlencoded({ extended: true}))
-        app.post('/', function(req, res) {
-            console.log(req.body)
-            console.log(req.body.name)
-            res.json({ "hello": "taro" });
-            });
+    app.get('/', (req, res) => {
+        res.json({
+            title: titleArray,
+            text: textArray 
+        });
+    });
 
-        app.listen(3000, console.log('Server listening port 3000'))
+    app.listen('3000', () => {
+        console.log('Application started');
+    });
+    
 });
