@@ -28,9 +28,38 @@ puppeteer.launch({
         const newsUrl = newsList[i];
         console.log("Navigating to:", newsUrl);
         await page.goto(newsUrl);
+        let detailSelector = '#uamods-pickup > div[class*="sc-"] > div[class*="sc-"] > a[href*="yahoo"]';
+        const newsDetail = await page.evaluate((detailSelector) => {
+            const details = [];
+            const detailNodes = document.querySelectorAll(detailSelector);
+            detailNodes.forEach(detailNode => {
+                details.push(detailNode.href);
+            })
+            return details;
+        }, detailSelector);
+
+        for (let j = 0; j < newsDetail.length; j++) {
+            const detailUrl = newsDetail[j];
+            await page.goto(detailUrl);
+        }
         const title = await page.title();
         console.log("Title:", title);
-        // ここで記事の情報を取得する処理を追加する
+
+        const newsTextElement = await page.$('div[class*="article_body"] > div[class*="sc-"] > p[class*="sc-"]');
+        const newsText = await page.evaluate(element => element.innerText, newsTextElement);
+        console.log(newsText);
     }
-  await browser.close();
+    //await browser.close();
+
+    const express = require('express')
+    const app = express();
+    app.use(express.json())
+    app.use(express.urlencoded({ extended: true}))
+        app.post('/', function(req, res) {
+            console.log(req.body)
+            console.log(req.body.name)
+            res.json({ "hello": "taro" });
+            });
+
+        app.listen(3000, console.log('Server listening port 3000'))
 });
